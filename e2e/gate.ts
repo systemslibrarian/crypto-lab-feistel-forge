@@ -798,17 +798,23 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await scanAt('Round: a random key and block loaded, still hovered');
 
   // The disclosures, opened through their summaries.
-  await page.locator('#panel-round details').first().locator('summary').click();
+  await page
+    .locator('#panel-round details', { hasText: 'S-box census' })
+    .locator('summary')
+    .click();
   await expect(page.locator('#panel-round details[open]')).toHaveCount(1);
   await scanAt('Round: the S-box preimage census table open');
 
-  await page.locator('#panel-round details').last().locator('summary').click();
+  await page
+    .locator('#panel-round details', { hasText: 'Check yourself' })
+    .locator('summary')
+    .click();
   await page.locator('#panel-round .check-opt').first().click();
-  await expect(page.locator('#panel-round .pill-bad')).toContainText('Not quite');
+  await expect(page.locator('#panel-round .check-result .pill-bad')).toContainText('Not quite');
   await scanAt('Round: learner check answered wrong — the Not quite pill');
 
   await page.locator('#panel-round .check-opt').nth(1).click();
-  await expect(page.locator('#panel-round .pill-ok')).toContainText('Correct');
+  await expect(page.locator('#panel-round .check-result .pill-ok')).toContainText('Correct');
   await scanAt('Round: learner check answered right — the Correct pill');
 
   // ── Same Circuit Both Ways ──────────────────────────────────────────────
@@ -841,7 +847,12 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await expect(page.locator('#panel-circuit .code-chip')).toHaveText('SEMI_WEAK_KEY');
   await scanAt('Circuit: SEMI_WEAK_KEY refusal, naming the partner key');
 
-  await page.locator('#panel-circuit details > summary').click();
+  // Named by its summary text, not by position: this panel ships two
+  // disclosures and a positional locator silently opens whichever one moves.
+  await page
+    .locator('#panel-circuit details', { hasText: 'Semi-weak keys' })
+    .locator('summary')
+    .click();
   await expect(page.locator('#panel-circuit details[open]')).toHaveCount(1);
   await scanAt('Circuit: the semi-weak pairs table open');
 
@@ -862,7 +873,11 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await expect(page.locator('#panel-complement .pill-bad')).toBeVisible();
   await scanAt('Complement: the plain search sweeps the whole space and finds nothing');
 
-  await page.locator('#panel-complement details > summary').click();
+  await page
+    .locator('#panel-complement details', { hasText: 'Why the second check works' })
+    .locator('summary')
+    .click();
+  await expect(page.locator('#panel-complement details[open]')).toHaveCount(1);
   await scanAt('Complement: the derivation disclosure open');
 
   await page.fill('#comp-key', 'not-a-key');
@@ -882,7 +897,10 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await expect(page.locator('#panel-mitm .verdict-info')).toContainText('not the state of the art');
   await scanAt('MITM: both keys recovered, with the full-size projection beside it');
 
-  await page.locator('#panel-mitm details > summary').click();
+  await page
+    .locator('#panel-mitm details', { hasText: 'What 3DES did about it' })
+    .locator('summary')
+    .click();
   await expect(page.locator('#panel-mitm details[open]')).toHaveCount(1);
   await scanAt('MITM: the "what 3DES did about it" disclosure open');
 
@@ -927,7 +945,11 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await expect(page.locator('#panel-sweet32 .verdict-pass').last()).toContainText('Permitted');
   await scanAt('Sweet32: the deliberately-unbounded policy permitting the same session');
 
-  await page.locator('#panel-sweet32 details').last().locator('summary').click();
+  await page
+    .locator('#panel-sweet32 details', { hasText: 'does NOT claim' })
+    .locator('summary')
+    .click();
+  await expect(page.locator('#panel-sweet32 details[open]')).toHaveCount(1);
   await scanAt('Sweet32: the "what this lab does NOT claim" disclosure open');
 
   // ── CAVP vectors ────────────────────────────────────────────────────────
@@ -938,10 +960,7 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
 
   // The smallest family, opened — 19 rows rather than the 64-row sweeps, so the
   // contrast walk stays proportionate while still measuring an open table.
-  await page
-    .locator('#panel-vectors details', { hasText: 'Substitution Table KAT' })
-    .locator('summary')
-    .click();
+  await page.locator('#panel-vectors details[data-group="subtab"] > summary').click();
   await expect(page.locator('#panel-vectors details[open]')).toHaveCount(1);
   await scanAt('Vectors: the Substitution Table family expanded to its 19 rows');
 

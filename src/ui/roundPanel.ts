@@ -36,6 +36,7 @@ import {
   learnerCheck,
   n,
   pill,
+  retire,
   scroller,
   selectField,
   statusRegion,
@@ -128,7 +129,7 @@ export function renderRoundPanel(root: HTMLElement): void {
     'Everything except the first is a deliberately broken F, kept here to make a point.'
   );
 
-  const applyBtn = button('Apply', 'btn-primary');
+  const applyBtn = button('Apply', 'btn btn-primary');
   const randomBtn = button('Random key & block');
   const inputStatus = statusRegion('Input status');
 
@@ -153,7 +154,7 @@ export function renderRoundPanel(root: HTMLElement): void {
   // ── The diagram and the step controls ───────────────────────────────────
   const figureHost = el('div', {});
   const backBtn = button('‹ Back');
-  const nextBtn = button('Next ›', 'btn-primary');
+  const nextBtn = button('Next ›', 'btn btn-primary');
   const resetBtn = button('Reset to round 1');
   const progress = el('span', { class: 'meter-label round-progress', text: 'Round 1 / 16' });
   const values = el('div', {});
@@ -177,7 +178,7 @@ export function renderRoundPanel(root: HTMLElement): void {
   );
 
   // ── Undo ────────────────────────────────────────────────────────────────
-  const undoBtn = button('Undo this round with the same F', 'btn-primary');
+  const undoBtn = button('Undo this round with the same F', 'btn btn-primary');
   const undoOut = statusRegion('Undo result');
   append(
     root,
@@ -284,7 +285,6 @@ export function renderRoundPanel(root: HTMLElement): void {
     progress.textContent = `Round ${state.round} / 16`;
     backBtn.disabled = state.round === 1;
     nextBtn.disabled = state.round === 16;
-    clear(undoOut);
     drawCollapse();
   }
 
@@ -349,6 +349,7 @@ export function renderRoundPanel(root: HTMLElement): void {
     state.trace = traceBlock(state.key, state.block, 'encrypt');
     state.f = roundFunctionById(fSelect.value);
     state.round = 1;
+    clear(undoOut);
     append(
       inputStatus,
       verdict(
@@ -365,8 +366,12 @@ export function renderRoundPanel(root: HTMLElement): void {
 
   applyBtn.addEventListener('click', apply);
   fSelect.addEventListener('change', () => {
+    // The no-op guard: re-selecting the F that is already selected changes
+    // nothing on screen, so a fresh undo result must survive it.
+    if (fSelect.value === state.f.id) return;
     state.f = roundFunctionById(fSelect.value);
     redraw();
+    retireUndo('the round function changed');
   });
   randomBtn.addEventListener('click', () => {
     keyInput.value = toHex(fixParity(randomBytes(8)));
@@ -374,17 +379,29 @@ export function renderRoundPanel(root: HTMLElement): void {
     apply();
   });
   backBtn.addEventListener('click', () => {
-    if (state.round > 1) state.round--;
+    if (state.round === 1) return;
+    state.round--;
     redraw();
+    retireUndo('the round changed');
   });
   nextBtn.addEventListener('click', () => {
-    if (state.round < 16) state.round++;
+    if (state.round === 16) return;
+    state.round++;
     redraw();
+    retireUndo('the round changed');
   });
   resetBtn.addEventListener('click', () => {
+    if (state.round === 1) return;
     state.round = 1;
     redraw();
+    retireUndo('the round changed');
   });
+
+  /** Only retire something that is actually there. */
+  function retireUndo(because: string): void {
+    if (!undoOut.firstChild) return;
+    retire(undoOut, 'That undo result', because);
+  }
 
   undoBtn.addEventListener('click', () => {
     clear(undoOut);

@@ -48,6 +48,7 @@ import {
   pill,
   pow2,
   rangeField,
+  retire,
   scroller,
   selectField,
   statusRegion,
@@ -248,7 +249,7 @@ function measuredCard(): HTMLElement {
     ],
     '16'
   );
-  const runBtn = button('Measure it', 'btn-primary');
+  const runBtn = button('Measure it', 'btn btn-primary');
 
   runBtn.addEventListener('click', () => {
     void (async () => {
@@ -329,9 +330,9 @@ function measuredCard(): HTMLElement {
 function recoveryCard(): HTMLElement {
   const out = statusRegion('Cookie recovery result');
   const streamHost = el('div', {});
-  const newBtn = button('New session', 'btn-primary');
+  const newBtn = button('New session', 'btn btn-primary');
   const recoverBtn = button('Recover the cookie');
-  const wrongBtn = button('Try the same arithmetic on a pair that did NOT collide', 'btn-danger');
+  const wrongBtn = button('Try the same arithmetic on a pair that did NOT collide', 'btn btn-danger');
 
   let session: ArrangedCollision = arrangeCollision(fixParity(randomBytes(8)), randomBytes(8));
 
@@ -453,7 +454,11 @@ function recoveryCard(): HTMLElement {
   newBtn.addEventListener('click', () => {
     session = arrangeCollision(fixParity(randomBytes(8)), randomBytes(8));
     drawStream();
-    clear(out);
+    // The recovered cookie belongs to the session that produced it; a new key,
+    // a new IV and a new ciphertext stream retire it rather than leave it
+    // sitting under a stream it no longer describes.
+    if (out.firstChild) retire(out, 'That recovery', 'this is a new session under a new key');
+    else clear(out);
   });
   recoverBtn.addEventListener('click', recover);
   wrongBtn.addEventListener('click', recoverWrong);

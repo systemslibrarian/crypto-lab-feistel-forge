@@ -9,10 +9,16 @@ import { defineConfig, devices } from '@playwright/test';
  *   claims.spec.ts — the claims suite. Checks that the numbers the page prints
  *                    are true, by re-deriving them independently of the source.
  *
- * Port 4687 is unique to this lab across the fleet, and deliberately not the
+ * Port 4657 is unique to this lab across the fleet, and deliberately not the
  * Vite default 4173. With 190 labs side by side a shared port means
  * `reuseExistingServer` silently scans a DIFFERENT lab's preview — that has
- * really happened here.
+ * really happened here, and it happened again during this build: the first
+ * choice, 4687, turned out to be held by `crypto-lab-attestation-gate`, being
+ * built alongside this lab, whose preview answered two of this gate's runs
+ * before the collision was found. 4657 was checked against every sibling's
+ * committed config, every sibling's WORKING TREE (the labs being built
+ * alongside this one are not committed yet), and every listening socket on the
+ * machine.
  */
 export default defineConfig({
   testDir: './e2e',
@@ -22,7 +28,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'list' : [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://localhost:4687/crypto-lab-feistel-forge/',
+    baseURL: 'http://localhost:4657/crypto-lab-feistel-forge/',
   },
   projects: [
     {
@@ -43,8 +49,8 @@ export default defineConfig({
     // that FAILS leaves the previous good bundle in place, so the whole suite
     // passes green against source that no longer compiles. With the build in
     // front a compile error aborts the run instead.
-    command: 'npm run build && npm run preview -- --port 4687 --strictPort',
-    url: 'http://localhost:4687/crypto-lab-feistel-forge/',
+    command: 'npm run build && npm run preview -- --port 4657 --strictPort',
+    url: 'http://localhost:4657/crypto-lab-feistel-forge/',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },

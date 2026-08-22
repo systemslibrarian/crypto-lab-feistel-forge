@@ -29,6 +29,7 @@ import {
   n,
   pill,
   pow2,
+  retire,
   scroller,
   selectField,
   statusRegion,
@@ -84,7 +85,7 @@ export function renderMitmPanel(root: HTMLElement): void {
     '12',
     'The remaining key bits are fixed and public. The cipher is the real DES throughout.'
   );
-  const runBtn = button('Run the attack', 'btn-primary');
+  const runBtn = button('Run the attack', 'btn btn-primary');
   const newKeysBtn = button('New victim keys');
   const progressLabel = el('span', { class: 'meter-label', text: 'Idle.' });
   const meterFill = el('div', { class: 'meter-fill' });
@@ -166,6 +167,7 @@ export function renderMitmPanel(root: HTMLElement): void {
 
   async function run(): Promise<void> {
     clear(output);
+    ranBits = bitsSelect.value;
     runBtn.disabled = true;
     newKeysBtn.disabled = true;
     bitsSelect.disabled = true;
@@ -300,20 +302,24 @@ export function renderMitmPanel(root: HTMLElement): void {
     );
   }
 
+  // A recovered key pair describes the keys the victim was using and the width
+  // it was found at. Change either and the printed pair is about a victim who
+  // no longer exists, so it is retired rather than left sitting there.
+  let ranBits = bitsSelect.value;
+  const invalidate = (because: string): void => {
+    pickKeys();
+    showSetup();
+    if (output.firstChild) retire(output, 'That recovered key pair', because);
+    meterFill.style.width = '0%';
+    progressLabel.textContent = 'Idle.';
+  };
   bitsSelect.addEventListener('change', () => {
-    pickKeys();
-    showSetup();
-    clear(output);
-    meterFill.style.width = '0%';
-    progressLabel.textContent = 'Idle.';
+    // No-op guard: re-selecting the width already in force keeps the result.
+    if (bitsSelect.value === ranBits) return;
+    ranBits = bitsSelect.value;
+    invalidate('the keyspace width changed');
   });
-  newKeysBtn.addEventListener('click', () => {
-    pickKeys();
-    showSetup();
-    clear(output);
-    meterFill.style.width = '0%';
-    progressLabel.textContent = 'Idle.';
-  });
+  newKeysBtn.addEventListener('click', () => invalidate('the victim drew new keys'));
   runBtn.addEventListener('click', () => {
     void run();
   });

@@ -76,7 +76,7 @@ export function renderVectorsPanel(root: HTMLElement): void {
 
   const summary = statusRegion('Known-answer test summary');
   const detail = el('div', {});
-  const runBtn = button('Run all vectors again', 'btn-primary');
+  const runBtn = button('Run all vectors again', 'btn btn-primary');
 
   append(
     root,
@@ -194,6 +194,10 @@ function groupDisclosure(outcome: GroupOutcome): HTMLElement {
       )
     )
   );
+  // A stable handle. Addressing these by their summary TEXT is ambiguous —
+  // the provenance card lists every family name too — and addressing them by
+  // position breaks the moment a family is added.
+  details.setAttribute('data-group', outcome.group.id);
   const summaryEl = details.querySelector('summary');
   if (summaryEl) append(summaryEl, ' ', ok ? pill('ok', 'PASS') : pill('bad', 'FAIL'));
   return details;

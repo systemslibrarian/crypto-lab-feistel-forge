@@ -187,6 +187,18 @@ export function rangeField(
   return { wrap, input, readout };
 }
 
+/**
+ * A button.
+ *
+ * `className` REPLACES the default, so a variant must name its base too —
+ * `'btn btn-primary'`, not `'btn-primary'`. `.btn-primary` and `.btn-danger`
+ * set only their colours and lean on `.btn` for everything else; passing the
+ * variant alone leaves the UA's own `buttonface` background in place, which in
+ * a dark colour-scheme is rgb(107,107,107) and fails contrast against every
+ * ink in this palette. The a11y gate caught exactly that on `.btn-danger`.
+ *
+ * `.seg-btn` and `.check-opt` are self-contained and are passed alone.
+ */
 export function button(text: string, className = 'btn', attrs: Attrs = {}): HTMLButtonElement {
   return el('button', { type: 'button', class: className, ...attrs }, text);
 }
@@ -214,7 +226,9 @@ export interface LearnerCheck {
  * "wrong" teaches nothing.
  */
 export function learnerCheck(check: LearnerCheck): HTMLDetailsElement {
-  const result = statusRegion('Learner check result');
+  // `.check-result` exists so a test can name THIS pill rather than every pill
+  // on the panel — the S-box census alone renders eight of them.
+  const result = statusRegion('Learner check result', 'check-result');
   const options = el('div', { class: 'check-opts' });
   for (const option of check.options) {
     const btn = button(option.text, 'check-opt');
@@ -234,6 +248,30 @@ export function learnerCheck(check: LearnerCheck): HTMLDetailsElement {
     append(options, btn);
   }
   return disclosure('Check yourself', el('p', { text: check.question }), options, result);
+}
+
+/**
+ * Replace a stale result with a notice saying it was retired.
+ *
+ * A verdict that stays on screen after its inputs change is the most ordinary
+ * way a demo tells a lie: the numbers beside it no longer describe the numbers
+ * above it, and nothing says so. Every control in this lab whose change
+ * invalidates a printed result calls this instead of silently clearing, so the
+ * page states what happened rather than leaving a gap the reader has to notice.
+ *
+ * Callers guard for no-ops themselves — re-selecting the value that is already
+ * selected must NOT retire a fresh result, and `e2e/claims.spec.ts` asserts
+ * both halves of that.
+ */
+export function retire(region: HTMLElement, what: string, because: string): void {
+  clear(region);
+  const notice = verdict(
+    'info',
+    el('strong', { text: 'Retired. ' }),
+    `${what} no longer matches the inputs on screen — ${because}. Run it again.`
+  );
+  notice.classList.add('retired');
+  append(region, notice);
 }
 
 /** Format a number with thousands separators, for counts on screen. */

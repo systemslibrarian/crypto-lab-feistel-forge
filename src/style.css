@@ -55,6 +55,18 @@
   --radius: 10px;
 }
 
+/*
+ * Border-box everywhere. Without it, the hero aside's `width: 100%` plus its
+ * own padding and border came to 386.8px inside a 351.2px container and pushed
+ * the whole document sideways at 380px — a WCAG 1.4.10 reflow failure that
+ * `expectNoHorizontalOverflow` caught before this line existed.
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
   /* The longhand, deliberately: axe and WebKit both miss the `background`
      shorthand when deciding what a text run is painted against. */
@@ -331,7 +343,6 @@ body {
   padding: 0.5rem 0.6rem;
   min-height: 2.5rem;
   width: 100%;
-  box-sizing: border-box;
 }
 #app select {
   /* A styled select must drop the platform arrow and draw its own, or the
@@ -348,6 +359,20 @@ body {
 #app textarea[aria-invalid='true'] {
   border-color: var(--bad);
   border-width: 2px;
+}
+
+/* The one checkbox on the page, with its label beside it rather than above. */
+.checkbox-line {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.checkbox-line input[type='checkbox'] {
+  width: 1.1rem;
+  height: 1.1rem;
+  min-height: 0;
+  accent-color: var(--accent);
+  flex: 0 0 auto;
 }
 
 #app input[type='range'] {
@@ -612,14 +637,25 @@ body {
 
 /* ── Block strips (CBC stream, MITM table) ───────────────────────────────── */
 
-.strip {
-  display: flex;
-  gap: 0.35rem;
+/*
+ * The scrolling wrapper and the list are SEPARATE elements on purpose. The
+ * element that scrolls has to be the one carrying `role="region"` and
+ * `tabindex="0"` (WCAG 2.1.1); the element carrying `role="list"` cannot also
+ * be that, because one element gets one role. Merging them put the overflow on
+ * the `role="list"` div and axe reported `scrollable-region-focusable`.
+ */
+.strip-wrap {
   overflow-x: auto;
-  padding: 0.4rem 0.2rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   background-color: var(--surface-2);
+}
+.strip {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.4rem 0.2rem 0.6rem;
+  width: max-content;
+  min-width: 100%;
 }
 .strip-block {
   flex: 0 0 auto;

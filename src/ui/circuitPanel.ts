@@ -92,19 +92,23 @@ export function renderCircuitPanel(root: HTMLElement): void {
     DEFAULT_BLOCK
   );
   const allowWeak = el('input', { type: 'checkbox', id: 'circuit-allow-weak' });
+  // ONE <label for>, deliberately. The field heading beside it is a <span>:
+  // giving the group heading a `for` as well points two labels at the same
+  // control, which axe reports as `form-field-multiple-labels` and which leaves
+  // a screen reader announcing the name twice.
   const allowWrap = el(
     'div',
     { class: 'field' },
-    el('label', { class: 'field-label', for: 'circuit-allow-weak', text: 'Deliberately broken mode' }),
+    el('span', { class: 'field-label', text: 'Deliberately broken mode' }),
     el(
       'span',
-      { class: 'field-help' },
+      { class: 'field-help checkbox-line' },
       allowWeak,
       ' ',
       el('label', { for: 'circuit-allow-weak', text: 'Load weak and semi-weak keys anyway' })
     )
   );
-  const runBtn = button('Encrypt, then decrypt', 'btn-primary');
+  const runBtn = button('Encrypt, then decrypt', 'btn btn-primary');
   const randomBtn = button('Random healthy key');
   const output = statusRegion('Round-trip result');
 

@@ -30,6 +30,7 @@ import {
   learnerCheck,
   n,
   pill,
+  retire,
   selectField,
   statusRegion,
   textField,
@@ -76,7 +77,7 @@ export function renderComplementPanel(root: HTMLElement): void {
   // ── The identity ────────────────────────────────────────────────────────
   const { wrap: keyWrap, input: keyInput } = textField('comp-key', 'Key (16 hex digits)', DEFAULT_KEY);
   const { wrap: blockWrap, input: blockInput } = textField('comp-block', 'Plaintext (16 hex digits)', DEFAULT_BLOCK);
-  const checkBtn = button('Compute both sides', 'btn-primary');
+  const checkBtn = button('Compute both sides', 'btn btn-primary');
   const randomBtn = button('Random pair');
   const identityOut = statusRegion('Complementation identity result');
 
@@ -112,7 +113,7 @@ export function renderComplementPanel(root: HTMLElement): void {
     ],
     'direct'
   );
-  const raceBtn = button('Race the two searches', 'btn-primary');
+  const raceBtn = button('Race the two searches', 'btn btn-primary');
   const raceOut = statusRegion('Search race result');
 
   append(
@@ -235,6 +236,8 @@ export function renderComplementPanel(root: HTMLElement): void {
 
   function race(): void {
     clear(raceOut);
+    ranWidth = widthSelect.value;
+    ranHalf = halfSelect.value;
     const bits = Number(widthSelect.value);
     const useComplementHalf = halfSelect.value === 'complement';
     const base = hexOf(SEARCH_BASE);
@@ -317,8 +320,27 @@ export function renderComplementPanel(root: HTMLElement): void {
     showIdentity();
   });
   raceBtn.addEventListener('click', race);
-  widthSelect.addEventListener('change', () => clear(raceOut));
-  halfSelect.addEventListener('change', () => clear(raceOut));
+
+  // The race's counters describe the width and the half it ran at, so changing
+  // either makes the printed result describe inputs that are no longer on
+  // screen. Re-selecting the SAME option changes nothing and must not retire a
+  // fresh result — hence the guards.
+  let ranWidth = widthSelect.value;
+  let ranHalf = halfSelect.value;
+  const retireRace = (because: string): void => {
+    if (!raceOut.firstChild) return;
+    retire(raceOut, 'That search result', because);
+  };
+  widthSelect.addEventListener('change', () => {
+    if (widthSelect.value === ranWidth) return;
+    ranWidth = widthSelect.value;
+    retireRace('the search width changed');
+  });
+  halfSelect.addEventListener('change', () => {
+    if (halfSelect.value === ranHalf) return;
+    ranHalf = halfSelect.value;
+    retireRace('the key is now hidden somewhere else');
+  });
 
   showIdentity();
   race();
