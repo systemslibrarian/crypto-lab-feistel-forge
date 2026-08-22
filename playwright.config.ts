@@ -40,7 +40,10 @@ export default defineConfig({
     {
       name: 'claims',
       testMatch: /claims\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'] },
+      // An explicit action timeout, because without one a click that never
+      // becomes actionable burns the whole test timeout and reports "3.0m"
+      // instead of naming the locator it was waiting on.
+      use: { ...devices['Desktop Chrome'], actionTimeout: 15_000 },
     },
   ],
   webServer: {

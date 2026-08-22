@@ -144,6 +144,18 @@ async function valueFor(page: Page, panel: string, term: string): Promise<string
   return (await dd.locator('xpath=following-sibling::dd[1]').innerText()).trim();
 }
 
+/**
+ * The same, normalised as hex.
+ *
+ * The round exhibit prints its halves as SPACED UPPERCASE bytes for
+ * readability, so a comparison against a computed lowercase run needs the
+ * spacing and the case taken out first — which is a property of the
+ * presentation, not of the value.
+ */
+async function hexValue(page: Page, panel: string, term: string): Promise<string> {
+  return (await valueFor(page, panel, term)).replace(/\s/g, '').toLowerCase();
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto('.');
   await expect(page.locator('#panel-round svg.round-figure')).toHaveCount(1);
@@ -204,15 +216,15 @@ test.describe('One Round', () => {
   });
 
   test('L(i) really is R(i-1) — the swap, cross-checked between two rows', async ({ page }) => {
-    const rightIn = (await valueFor(page, '#panel-round', 'R0 (right in)')).replace(/\s/g, '');
-    const leftOut = (await valueFor(page, '#panel-round', 'L1 (left out)')).replace(/\s/g, '');
+    const rightIn = await hexValue(page, '#panel-round', 'R0 (right in)');
+    const leftOut = await hexValue(page, '#panel-round', 'L1 (left out)');
     expect(leftOut).toBe(rightIn);
   });
 
   test('R(i) really is L(i-1) XOR f, recomputed from the printed halves', async ({ page }) => {
-    const leftIn = (await valueFor(page, '#panel-round', 'L0 (left in)')).replace(/\s/g, '');
-    const fOut = (await valueFor(page, '#panel-round', 'f(R, K)')).replace(/\s/g, '');
-    const rightOut = (await valueFor(page, '#panel-round', 'R1 (right out)')).replace(/\s/g, '');
+    const leftIn = await hexValue(page, '#panel-round', 'L0 (left in)');
+    const fOut = await hexValue(page, '#panel-round', 'f(R, K)');
+    const rightOut = await hexValue(page, '#panel-round', 'R1 (right out)');
     // Independent XOR, over the strings the page put on screen.
     const xored = leftIn
       .match(/../g)!
@@ -310,7 +322,10 @@ test.describe('Same Circuit Both Ways', () => {
 
   test('the two schedule columns really are one another reversed', async ({ page }) => {
     await page.getByRole('button', { name: 'Encrypt, then decrypt' }).click();
-    const rows = await page.locator('#panel-circuit table tbody tr').all();
+    // Scoped: this panel holds TWO tables, and the semi-weak one is inside a
+    // shut <details> — shut, but still in the DOM, so an unscoped selector
+    // collects 22 rows and the count assertion fails for the wrong reason.
+    const rows = await page.locator('#panel-circuit [aria-label="Key schedule, forward and reversed"] tbody tr').all();
     expect(rows).toHaveLength(16);
     const forward: string[] = [];
     const reverse: string[] = [];
