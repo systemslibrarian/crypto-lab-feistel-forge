@@ -260,6 +260,13 @@ npm run test:a11y  # the WCAG 2.1 A/AA gate against the production build
 npm run test:claims
 ```
 
+`src/des/vectors.ts` is generated. `npm run vectors:build` re-downloads
+`KAT_TDES.zip` from NIST, refuses to write anything unless its SHA-256 matches
+the digest recorded in `scripts/build-vectors.mjs`, checks that each `.rsp`
+file's `[ENCRYPT]` and `[DECRYPT]` sections carry the same triples, and
+reproduces the committed file byte for byte. Nothing in the build or the test
+suites touches the network.
+
 ---
 
 ## Related Demos
