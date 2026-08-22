@@ -1,0 +1,858 @@
+/*
+ * Feistel Forge — the lab's palette and components.
+ *
+ * Dark is the only theme; there is no toggle and no `prefers-color-scheme`
+ * branch. Every colour lives on `:root` so the always-dark shared top bar and
+ * this page agree, and `--accent` is defined there because the bar reads it.
+ *
+ * Two rules shape the tokens:
+ *
+ *  - MUTED TEXT LOWERS LIGHTNESS, never opacity. An opacity-faded string
+ *    composites against whatever happens to be behind it, so its real contrast
+ *    is not the one the stylesheet claims. Every dim tone here is its own hex.
+ *  - COLOUR NEVER CARRIES STATE ALONE. Every verdict, pill and badge pairs its
+ *    tone with a glyph AND a word (WCAG 1.4.1). The glyphs are `aria-hidden`
+ *    because the word beside them already says it.
+ *
+ * Text on a coloured fill uses a dedicated ink token, so nothing near-white
+ * ever lands on the amber accent.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Brand accent. The shared top bar reads this; without it the bar silently
+     falls back to the fleet's teal and the header looks like another lab's. */
+  --accent: #ffb84d;
+  --accent-ink: #241704;
+  --accent-dim: #c98a2c;
+
+  --bg: #0d1017;
+  --surface: #151a24;
+  --surface-2: #1d2431;
+  --surface-3: #262f3f;
+
+  /* Decorative dividers only. Never a control boundary — see --control-edge. */
+  --border: #38435a;
+  /* Every interactive control's edge. >= 3:1 against every surface above. */
+  --control-edge: #808fae;
+
+  --text: #eef2f9;
+  --text-dim: #c2cbdc;
+  --text-muted: #9aa6bd;
+
+  --good: #6ee7a0;
+  --good-ink: #04220f;
+  --bad: #ff9797;
+  --bad-ink: #2d0808;
+  --alarm: #ffa46b;
+  --alarm-ink: #2b1204;
+  --warn: #ffd166;
+  --warn-ink: #2b2104;
+  --link: #8fc4ff;
+
+  --mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+  --radius: 10px;
+}
+
+html {
+  /* The longhand, deliberately: axe and WebKit both miss the `background`
+     shorthand when deciding what a text run is painted against. */
+  background-color: var(--bg);
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Scoped to #app on purpose: the shared top bar is always dark and
+   self-contained, and a global `p{}` or `button{}` rule fights it. */
+#app {
+  max-width: 74rem;
+  margin: 0 auto;
+  padding: 0 clamp(0.9rem, 3vw, 2rem) 3rem;
+}
+
+#app p {
+  margin: 0 0 0.75rem;
+}
+#app p:last-child {
+  margin-bottom: 0;
+}
+
+#app h2,
+#app h3,
+#app h4 {
+  margin: 0 0 0.5rem;
+  line-height: 1.25;
+}
+#app h2 {
+  font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+}
+#app h3 {
+  font-size: 1.05rem;
+}
+#app h4 {
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+#app a {
+  color: var(--link);
+  /* A persistent underline: colour alone is not a link affordance. */
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+#app a:hover {
+  text-decoration-thickness: 2px;
+}
+
+#app code,
+.mono {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Hero (fleet standard) ───────────────────────────────────────────────── */
+
+.cl-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(1rem, 4vw, 3rem);
+  flex-wrap: wrap;
+  margin: clamp(1rem, 3vw, 2rem) 0 1.5rem;
+}
+.cl-hero-main {
+  flex: 1 1 22rem;
+  min-width: min(100%, 20rem);
+}
+.cl-hero-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 3.8vw, 2.7rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+.cl-hero-sub {
+  margin: 0.4rem 0 0;
+  font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+  letter-spacing: 0.01em;
+  color: var(--accent);
+}
+.cl-hero-desc {
+  margin: 0.55rem 0 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+  max-width: 60ch;
+}
+.cl-hero-why {
+  flex: 0 1 min(40%, 26rem);
+  min-width: min(100%, 15rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1.05rem;
+  background-color: #1a1b18;
+}
+.cl-hero-why-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+.cl-hero-why-text {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+@media (max-width: 640px) {
+  .cl-hero {
+    flex-direction: column;
+  }
+  .cl-hero-why {
+    flex-basis: auto;
+    width: 100%;
+  }
+}
+
+/* ── Scope note ──────────────────────────────────────────────────────────── */
+
+.scope-note {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  padding: 0.75rem 1rem;
+  margin: 0 0 1.5rem;
+  color: var(--text-dim);
+  font-size: 0.92rem;
+}
+.scope-note strong {
+  color: var(--text);
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+
+.tabs {
+  margin-bottom: 1.25rem;
+}
+.tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.tab-btn {
+  appearance: none;
+  border: 1px solid var(--control-edge);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.5rem 0.85rem;
+  min-height: 2.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+.tab-btn:hover {
+  background-color: var(--surface-3);
+  color: var(--text);
+  border-color: var(--accent);
+}
+.tab-btn[aria-selected='true'] {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* ── Panels and cards ────────────────────────────────────────────────────── */
+
+.panel[hidden] {
+  display: none;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  padding: clamp(0.85rem, 2vw, 1.25rem);
+  margin-bottom: 1.1rem;
+}
+.card-sub {
+  background-color: var(--surface-2);
+}
+.card-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+.card-title h2,
+.card-title h3 {
+  margin: 0;
+}
+.card-note {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* The plain-language on-ramp that opens every exhibit. */
+.intro {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface-2);
+  padding: clamp(0.85rem, 2vw, 1.15rem);
+  margin-bottom: 1.1rem;
+  color: var(--text-dim);
+  max-width: 78ch;
+}
+.intro h2 {
+  color: var(--text);
+}
+.intro strong {
+  color: var(--text);
+}
+
+/* ── Controls ────────────────────────────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+.field-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.field-help {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+#app input[type='text'],
+#app textarea,
+#app select {
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 0.92rem;
+  background-color: var(--surface-3);
+  color: var(--text);
+  border: 1px solid var(--control-edge);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  min-height: 2.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+#app select {
+  /* A styled select must drop the platform arrow and draw its own, or the
+     native control paints a chevron this palette cannot reach. */
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%),
+    linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2.2rem;
+}
+#app input[aria-invalid='true'],
+#app textarea[aria-invalid='true'] {
+  border-color: var(--bad);
+  border-width: 2px;
+}
+
+#app input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+  min-height: 2.2rem;
+}
+
+.btn {
+  appearance: none;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 1px solid var(--control-edge);
+  border-radius: 8px;
+  background-color: var(--surface-3);
+  color: var(--text);
+  padding: 0.5rem 0.9rem;
+  min-height: 2.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn:hover:not(:disabled) {
+  background-color: var(--surface-2);
+  border-color: var(--accent);
+}
+.btn:disabled {
+  cursor: not-allowed;
+  color: var(--text-muted);
+  border-color: var(--border);
+  background-color: var(--surface);
+}
+.btn-primary {
+  background-color: var(--accent);
+  /* Not the same colour as the fill: a button whose edge matches its own fill
+     has no boundary at all against the card behind it. */
+  border-color: var(--accent-dim);
+  color: var(--accent-ink);
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: #ffc76f;
+  border-color: var(--accent-ink);
+  color: var(--accent-ink);
+}
+.btn-danger {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.seg-btn {
+  appearance: none;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid var(--control-edge);
+  border-radius: 8px;
+  background-color: var(--surface-3);
+  color: var(--text-dim);
+  padding: 0.4rem 0.7rem;
+  min-height: 2.25rem;
+  cursor: pointer;
+}
+.seg-btn[aria-pressed='true'] {
+  background-color: var(--accent);
+  border-color: var(--accent-dim);
+  color: var(--accent-ink);
+}
+.seg-btn:hover {
+  border-color: var(--accent);
+}
+
+/* ── Verdicts, pills and badges — glyph + word + tone, never tone alone ──── */
+
+.verdict {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  margin: 0.75rem 0 0;
+  font-size: 0.94rem;
+  background-color: var(--surface-2);
+}
+.verdict-glyph {
+  font-weight: 700;
+  line-height: 1.4;
+}
+.verdict-pass {
+  border-left-color: var(--good);
+  color: var(--good);
+}
+.verdict-fail {
+  border-left-color: var(--bad);
+  color: var(--bad);
+}
+.verdict-alarm {
+  border-left-color: var(--alarm);
+  color: var(--alarm);
+}
+.verdict-info {
+  border-left-color: var(--accent);
+  color: var(--text-dim);
+}
+.verdict-body {
+  color: inherit;
+}
+.verdict-body strong {
+  color: inherit;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+}
+.pill-ok {
+  background-color: var(--good);
+  color: var(--good-ink);
+  border-color: #3aa168;
+}
+.pill-bad {
+  background-color: var(--bad);
+  color: var(--bad-ink);
+  border-color: #b85c5c;
+}
+.pill-warn {
+  background-color: var(--warn);
+  color: var(--warn-ink);
+  border-color: #b8973f;
+}
+.pill-neutral {
+  background-color: var(--surface-3);
+  color: var(--text-dim);
+  border-color: var(--control-edge);
+}
+
+/* The permanent honesty banner on anything arranged rather than found. */
+.arranged-banner {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  border: 2px solid var(--warn);
+  border-radius: 8px;
+  background-color: #241f10;
+  color: var(--warn);
+  padding: 0.6rem 0.8rem;
+  margin: 0 0 0.9rem;
+  font-size: 0.9rem;
+}
+.arranged-banner strong {
+  color: var(--warn);
+}
+
+/* ── Key/value readouts ──────────────────────────────────────────────────── */
+
+.kv {
+  display: grid;
+  grid-template-columns: minmax(7rem, max-content) 1fr;
+  gap: 0.3rem 0.8rem;
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+}
+.kv dt {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.kv dd {
+  margin: 0;
+  font-family: var(--mono);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 520px) {
+  .kv {
+    grid-template-columns: 1fr;
+    gap: 0.05rem 0;
+  }
+  .kv dd {
+    margin-bottom: 0.4rem;
+  }
+}
+
+.hexline {
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+.hexline-dim {
+  color: var(--text-dim);
+}
+.hex-hi {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ── The Feistel round diagram ───────────────────────────────────────────── */
+
+.round-figure {
+  display: block;
+  width: 100%;
+  max-width: 40rem;
+  margin: 0.5rem auto 0;
+  height: auto;
+}
+.rf-box {
+  fill: var(--surface-3);
+  stroke: var(--control-edge);
+  stroke-width: 1.5;
+}
+.rf-box-f {
+  fill: #2a2113;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.rf-label {
+  fill: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+.rf-value {
+  fill: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.rf-wire {
+  stroke: var(--control-edge);
+  stroke-width: 2;
+  fill: none;
+}
+.rf-wire-live {
+  stroke: var(--accent);
+  stroke-width: 3;
+  fill: none;
+}
+.rf-xor {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.rf-caption {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 0.4rem;
+}
+
+/* ── Block strips (CBC stream, MITM table) ───────────────────────────────── */
+
+.strip {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding: 0.4rem 0.2rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--surface-2);
+}
+.strip-block {
+  flex: 0 0 auto;
+  min-width: 8.5rem;
+  border: 1px solid var(--control-edge);
+  border-radius: 6px;
+  background-color: var(--surface-3);
+  padding: 0.4rem 0.45rem;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+.strip-block strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+.strip-index {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+.strip-secret {
+  border-color: var(--bad);
+  border-width: 2px;
+}
+.strip-attacker {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+.strip-collide {
+  background-color: #2a2113;
+}
+.strip-tag {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.strip-tag-secret {
+  color: var(--bad);
+}
+.strip-tag-attacker {
+  color: var(--accent);
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 26rem;
+  overflow-y: auto;
+}
+#app table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+}
+#app th,
+#app td {
+  text-align: left;
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+#app th {
+  position: sticky;
+  top: 0;
+  background-color: var(--surface-3);
+  color: var(--text);
+  font-weight: 700;
+  z-index: 1;
+}
+#app td {
+  color: var(--text-dim);
+  font-family: var(--mono);
+}
+#app tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Progress ────────────────────────────────────────────────────────────── */
+
+.meter {
+  height: 0.7rem;
+  border-radius: 999px;
+  background-color: var(--surface-3);
+  border: 1px solid var(--control-edge);
+  overflow: hidden;
+  margin: 0.4rem 0 0.2rem;
+}
+.meter-fill {
+  height: 100%;
+  background-color: var(--accent);
+  width: 0;
+}
+.meter-fill-over {
+  background-color: var(--bad);
+}
+.meter-label {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+/* ── Disclosure ──────────────────────────────────────────────────────────── */
+
+#app details {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--surface-2);
+  margin-top: 0.8rem;
+}
+#app summary {
+  cursor: pointer;
+  padding: 0.55rem 0.8rem;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text);
+  border-radius: 8px;
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+}
+#app summary:hover {
+  color: var(--accent);
+}
+.details-body {
+  padding: 0 0.8rem 0.8rem;
+  color: var(--text-dim);
+  font-size: 0.92rem;
+}
+.details-body ul,
+.details-body ol {
+  margin: 0.4rem 0;
+  padding-left: 1.2rem;
+}
+.details-body li {
+  margin-bottom: 0.3rem;
+}
+
+/* The learner check: a question with real answers, not a quiz decoration. */
+.check-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+.check-opt {
+  text-align: left;
+  appearance: none;
+  font: inherit;
+  font-size: 0.9rem;
+  border: 1px solid var(--control-edge);
+  border-radius: 8px;
+  background-color: var(--surface-3);
+  color: var(--text);
+  padding: 0.5rem 0.7rem;
+  min-height: 2.5rem;
+  cursor: pointer;
+}
+.check-opt:hover {
+  border-color: var(--accent);
+}
+
+/* ── Failure-code chips ──────────────────────────────────────────────────── */
+
+.code-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 5px;
+  padding: 0.1rem 0.4rem;
+  background-color: var(--bad);
+  color: var(--bad-ink);
+  border: 1px solid #b85c5c;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
+.scripture-footer {
+  margin-top: 2.5rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+.footer-links {
+  margin-bottom: 0.6rem;
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────────── */
+
+/*
+ * The only animation in this stylesheet is the one-shot reveal a panel plays
+ * when it is rendered. It represents something — content arriving — and it is
+ * tied to an action. There is no idle or looping motion anywhere.
+ */
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.panel {
+  animation: panel-in 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /*
+   * Cancelling the animation restores the static `opacity: 1` — nothing on this
+   * page is parked at `opacity: 0` waiting for an animation's `forwards` fill to
+   * reveal it, so a reduced-motion reader gets the finished rendering rather
+   * than an invisible one. The gate asserts that from inside the page.
+   */
+  .panel {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.001ms !important;
+  }
+}
