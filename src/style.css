@@ -318,6 +318,23 @@ body {
   flex: 1 1 14rem;
   min-width: 0;
 }
+/*
+ * A field holding only a button sizes to the button. Without this it inherits
+ * the 14rem flex basis meant for labelled inputs, and a row of actions ends up
+ * as one stretched bar per line.
+ *
+ * `0 1 auto`, NOT `0 0 auto`: the second refuses to shrink, and the Sweet32
+ * panel's longest action ("Try the same arithmetic on a pair that did NOT
+ * collide") is then 391px wide inside a 351px container, which pushed the
+ * whole document sideways at 380px. `expectNoHorizontalOverflow` caught it.
+ */
+.controls .field:has(> button):not(:has(label)) {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.controls .field > button {
+  max-width: 100%;
+}
 .field-label {
   font-size: 0.78rem;
   font-weight: 700;
@@ -480,6 +497,12 @@ body {
   color: var(--alarm);
 }
 .verdict-info {
+  border-left-color: var(--accent);
+  color: var(--text-dim);
+}
+/* A stale result that has been withdrawn. Same tokens as `.verdict-info`, both
+   already measured by the gate, but its own class so nothing has to guess. */
+.verdict-retired {
   border-left-color: var(--accent);
   color: var(--text-dim);
 }

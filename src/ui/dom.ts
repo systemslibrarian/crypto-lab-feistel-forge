@@ -265,13 +265,24 @@ export function learnerCheck(check: LearnerCheck): HTMLDetailsElement {
  */
 export function retire(region: HTMLElement, what: string, because: string): void {
   clear(region);
-  const notice = verdict(
-    'info',
-    el('strong', { text: 'Retired. ' }),
-    `${what} no longer matches the inputs on screen — ${because}. Run it again.`
+  // Its OWN tone class rather than `verdict-info`. Retirement is a distinct
+  // state from an informational note, and reusing the info class made every
+  // `.verdict-info` selector in the gate ambiguous the moment a panel could
+  // hold both at once — which is exactly what the a11y drive hit.
+  append(
+    region,
+    el(
+      'p',
+      { class: 'verdict verdict-retired retired' },
+      el('span', { class: 'verdict-glyph', 'aria-hidden': 'true', text: '↺' }),
+      el(
+        'span',
+        { class: 'verdict-body' },
+        el('strong', { text: 'Retired. ' }),
+        `${what} no longer matches the inputs on screen — ${because}. Run it again.`
+      )
+    )
   );
-  notice.classList.add('retired');
-  append(region, notice);
 }
 
 /** Format a number with thousands separators, for counts on screen. */

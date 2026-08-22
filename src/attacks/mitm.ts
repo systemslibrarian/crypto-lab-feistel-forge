@@ -188,6 +188,13 @@ export async function meetInTheMiddle(options: MitmOptions): Promise<MitmResult>
   };
 }
 
+// [extension] point — a time-memory tradeoff (storing only a truncated middle
+// value and re-checking survivors) is the obvious next exhibit, because memory
+// rather than time is what actually stops this attack. It would slot in as a
+// third phase after `match`, and `MitmResult` already reports `tableEntries`
+// separately from `desOperations` so the tradeoff has both axes to plot. Not
+// built.
+
 export interface Projection {
   /** Total DES operations the full 56-bit attack needs, as a power of two. */
   readonly fullOpsLog2: number;

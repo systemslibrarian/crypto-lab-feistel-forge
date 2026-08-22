@@ -757,10 +757,16 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   // must still succeed — that pairing IS the exhibit's claim.
   await page.selectOption('#round-f', 'zero');
   await expect(page.locator('#panel-round .verdict-info')).toContainText('Not injective');
-  await scanAt('Round: F = 0 selected — the measured collapse says not injective');
+  // Changing F retires the undo result printed a moment ago. That notice is a
+  // state a reader reaches, and it is scanned HERE because the next click
+  // replaces it — scanning after the click would find nothing and pass having
+  // measured a rendering that was no longer on the page.
+  await expect(page.locator('#panel-round .retired')).toContainText('Retired');
+  await scanAt('Round: F = 0 selected — collapse measured, previous undo retired');
 
   await page.getByRole('button', { name: /Undo this round/ }).click();
   await expect(page.locator('#panel-round .verdict-pass')).toContainText('never inverted');
+  await expect(page.locator('#panel-round .retired')).toHaveCount(0);
   await scanAt('Round: a provably non-invertible F, and the round still undone');
 
   await page.selectOption('#round-f', 'nibble');

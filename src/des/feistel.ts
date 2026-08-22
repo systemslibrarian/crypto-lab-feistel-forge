@@ -94,6 +94,12 @@ export const ROUND_FUNCTIONS: readonly FeistelRoundFunction[] = [
   },
 ];
 
+// [extension] point — an UNBALANCED Feistel network (halves of unequal width,
+// as in Skipjack and MARS) would extend the invertibility claim in the most
+// instructive direction: the structure survives that too. `runFeistel` would
+// need a split position rather than a hard-coded 4/4, and `FeistelStep` would
+// need the widths recorded. Not built.
+
 export function roundFunctionById(id: string): FeistelRoundFunction {
   const found = ROUND_FUNCTIONS.find((f) => f.id === id);
   if (!found) throw new RangeError(`unknown round function: ${id}`);

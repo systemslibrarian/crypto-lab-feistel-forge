@@ -292,7 +292,7 @@ the mode rather than only the block cipher:
 | `src/des/weakKeys.test.ts` | every weak key proved an involution BY EXECUTION, every semi-weak pair proved to cancel, and every strict-parsing refusal |
 | `src/des/modes.test.ts` | CBC chaining against its own definition, the ECB tell, the data limit at its exact boundary, and that the meter and the cipher are one function |
 | `src/des/feistel.test.ts` | the headline claim: every round function inverts, at every round count, including ones measured to be non-injective; the exhaustive S-box preimage census; and that DES really is `FP(feistel(IP(block)))` |
-| `src/attacks/complement.test.ts` | the identity on 364 pairs, and the halving read off the searches' own counters |
+| `src/attacks/complement.test.ts` | the identity on 365 key/plaintext pairs, and the halving read off the searches' own counters |
 | `src/attacks/mitm.test.ts` | key recovery, the second-pair sieve, the operation count, and the published complexities |
 | `src/attacks/sweet32.test.ts` | the birthday arithmetic, a measured truncated collision independently re-derived, and the arranged collision's recovery recomputed from public values only |
 
