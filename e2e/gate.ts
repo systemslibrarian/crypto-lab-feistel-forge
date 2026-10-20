@@ -296,7 +296,7 @@ export async function boot(page: Page, theme: 'dark' | 'light'): Promise<void> {
 
   // ── The page really rendered ────────────────────────────────────────────
   await expect(page.locator('main')).toHaveCount(1);
-  await expect(page.locator('.tab-btn')).toHaveCount(6);
+  await expect(page.locator('.tab-btn')).toHaveCount(7);
 
   // The shared skip link points at an id that exists. axe's skip-link rule is
   // best-practice, not WCAG-tagged, so `withTags` never runs it — a skip link
@@ -323,7 +323,7 @@ export async function boot(page: Page, theme: 'dark' | 'light'): Promise<void> {
   await expect(page.locator('#panel-round .round-progress')).toHaveText('Round 1 / 16');
   await expect(page.locator('#panel-round svg.round-figure')).toHaveCount(1);
   await expect(page.locator('#panel-round .kv dd')).toHaveCount(9);
-  for (const id of ['circuit', 'complement', 'mitm', 'sweet32', 'vectors']) {
+  for (const id of ['circuit', 'complement', 'mitm', 'sweet32', 'vectors', 'rounds']) {
     await expect(page.locator(`#panel-${id}`)).toBeHidden();
     await expect(page.locator(`#panel-${id}`)).toBeEmpty();
   }
@@ -1006,4 +1006,16 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
 
   await page.locator('#round-f').focus();
   await scanAt('the styled select focused');
+  await driveRoundsStates(page, theme);
+}
+
+
+export async function driveRoundsStates(page:Page,label:string):Promise<void> {
+  await openTab(page,/How Many Rounds/,'#panel-rounds');await scan(page,`${label}: round-count arrival`);
+  await page.locator('#lr-trials').fill('10');await page.locator('#lr-run').click();await expect(page.locator('#lr-state')).toContainText('Complete:');await scan(page,`${label}: measured matrix`);
+  await page.getByRole('button',{name:'DES functions',exact:true}).click();await page.locator('#lr-step').click();await scan(page,`${label}: DES transcript and bytes`);
+  await page.locator('#lr-fixture').click();await expect(page.locator('#lr-state')).toContainText('Complete:');await scan(page,`${label}: neutral negative fixture`);
+  await page.locator('#lr-swap').click();await expect(page.locator('#lr-state')).toContainText('Complete:');await scan(page,`${label}: swap attack alarm`);
+  await page.locator('#panel-rounds details').filter({hasText:'What this does not prove'}).locator('summary').click();await page.locator('#panel-rounds details').filter({hasText:'Why three rounds survive'}).locator('summary').click();await scan(page,`${label}: theorem limits open`);
+  await page.locator('#lr-trials').fill('9');await page.locator('#lr-run').click();await scan(page,`${label}: trial-count refusal`);
 }

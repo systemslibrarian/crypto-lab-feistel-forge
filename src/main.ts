@@ -18,6 +18,7 @@ import { renderComplementPanel } from './ui/complementPanel';
 import { renderMitmPanel } from './ui/mitmPanel';
 import { renderSweet32Panel } from './ui/sweet32Panel';
 import { renderVectorsPanel } from './ui/vectorsPanel';
+import { renderRoundsPanel } from './ui/roundsPanel';
 
 type Renderer = (root: HTMLElement) => void;
 
@@ -28,6 +29,7 @@ const RENDERERS: Record<string, Renderer> = {
   mitm: renderMitmPanel,
   sweet32: renderSweet32Panel,
   vectors: renderVectorsPanel,
+  rounds: renderRoundsPanel,
 };
 
 const rendered = new Set<string>();

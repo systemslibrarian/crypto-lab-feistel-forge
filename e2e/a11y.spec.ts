@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
   boot,
   driveAllStates,
+  driveRoundsStates,
   expectBaselineNotStale,
   NARROW,
   REFLOW,
@@ -79,3 +80,7 @@ for (const theme of ['dark'] as const) {
     reportCollected();
   });
 }
+
+test('round-count extension accessible at 320px',async({page})=>{
+  test.setTimeout(600000);const errors=watchPageErrors(page);await page.setViewportSize({width:320,height:900});await boot(page,'dark');await driveRoundsStates(page,'320px');expect(errors).toEqual([]);reportCollected();
+});

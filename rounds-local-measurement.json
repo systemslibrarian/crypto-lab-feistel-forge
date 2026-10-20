@@ -1,0 +1,6 @@
+{
+  "browser": "153.0.8010.0",
+  "trials": 200,
+  "cells": 12,
+  "timing": "i\nComplete: 12 measured cells in 1592.4 ms. A difference at most 0.05 is labelled “no advantage measured”; that display threshold is not a proof."
+}

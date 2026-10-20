@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -758,4 +759,86 @@ test.describe('CAVP vectors', () => {
     const runs = await hexRuns(page, '#panel-vectors details[data-group="subtab"] tbody');
     expect(runs).toHaveLength(19 * 3);
   });
+});
+
+// Extension assertions read the production DOM; the DES oracle above shares no source.
+async function openRounds(page:Page):Promise<void>{await open(page,/How Many Rounds/, '#panel-rounds');}
+async function runRounds(page:Page):Promise<void>{await page.locator('#lr-run').click();await expect(page.locator('#lr-state')).toContainText('Complete:');}
+
+test('rounds matrix raw counts probabilities advantages and alarm semantics agree',async({page})=>{
+  await openRounds(page);await page.locator('#lr-trials').fill('20');await runRounds(page);
+  const cells=page.locator('#lr-matrix td');await expect(cells).toHaveCount(12);
+  for(const cell of await cells.all()){
+    const r=Number(await cell.getAttribute('data-rounds')),d=await cell.getAttribute('data-d');
+    const parse=(s:string)=>{const m=s.match(/: (\d+)\/(\d+) = ([0-9.]+)/)!;return {hits:Number(m[1]),trials:Number(m[2]),p:Number(m[3])};};
+    const f=parse(await cell.locator('[data-world="feistel"]').innerText()),pi=parse(await cell.locator('[data-world="random"]').innerText());
+    expect(f.trials).toBe(20);expect(pi.trials).toBe(20);expect(f.p).toBeCloseTo(f.hits/f.trials,6);expect(pi.p).toBeCloseTo(pi.hits/pi.trials,6);
+    expect(await cell.locator('[data-world="feistel"]').innerText()).toMatch(/^Feistel:/);expect(await cell.locator('[data-world="random"]').innerText()).toMatch(/^Random permutation:/);
+    const advantage=Number((await cell.locator('[data-advantage]').innerText()).split(': ')[1]);expect(advantage).toBeCloseTo(f.p-pi.p,6);
+    const certain=(r===1&&(d==='D1'||d==='D3'))||(r===2&&(d==='D2'||d==='D3'))||(r===3&&d==='D3');
+    if(certain)expect(f.hits).toBe(20);else expect(f.hits).toBeLessThanOrEqual(1);expect(pi.hits).toBeLessThanOrEqual(1);
+    await expect(cell.locator('.verdict')).toHaveClass(new RegExp(Math.abs(advantage)>.05?'verdict-alarm':'verdict-info'));
+    await expect(cell.locator('.verdict')).toContainText(Math.abs(advantage)>.05?'✕ distinguished':'– no advantage measured');
+    const e=d==='D1'?20:40,dec=d==='D3'?20:0;await expect(cell).toContainText(`Each world: ${e} encryptions, ${dec} inverse queries.`);
+  }
+  await expect(page.locator('#lr-convention')).toContainText('no final swap');
+});
+
+test('rounds DES D3 transcript independently recomputes all forward inverse queries and bytes',async({page})=>{
+  await openRounds(page);await page.getByRole('button',{name:'DES functions',exact:true}).click();await installIndependentDes(page);
+  for(const rounds of ['3','4']){
+    await page.locator('#lr-rounds').selectOption(rounds);await page.locator('#lr-step').click();
+    const keys=await page.locator('#lr-transcript [data-key]').allTextContents();expect(keys.length).toBe(Number(rounds));
+    const fields=await page.locator('#lr-transcript [data-field]').evaluateAll(ns=>Object.fromEntries(ns.map(n=>[n.getAttribute('data-field'),n.textContent!.trim()])));
+    const expected=await page.evaluate(({keys,fields})=>{
+      const des=(window as unknown as {__independentDes:{encrypt:(k:string,p:string)=>string}}).__independentDes;
+      const hex=(n:number)=>(n>>>0).toString(16).padStart(8,'0');
+      const f=(i:number,r:number)=>parseInt(des.encrypt(keys[i],hex(r)+'00000000').slice(0,8),16);
+      const forward=(l:number,r:number)=>{for(let i=0;i<keys.length;i++){const next=(l^f(i,r))>>>0;l=r;r=next;}return [l,r];};
+      const inverse=(l:number,r:number)=>{for(let i=keys.length-1;i>=0;i--){const previous=(r^f(i,l))>>>0;r=l;l=previous;}return [l,r];};
+      const L=parseInt(fields.L,16),R=parseInt(fields.R,16),delta=parseInt(fields.delta,16),Lp=(L^delta)>>>0;
+      const [S,T]=forward(L,R),[Sp,Tp]=forward(Lp,R),[Ld,Rd]=inverse(Sp,(Tp^delta)>>>0),relation=(S^Sp^R)>>>0;
+      return {S:hex(S),T:hex(T),Lprime:hex(Lp),Sprime:hex(Sp),Tprime:hex(Tp),inverseInput:hex(Sp)+hex(Tp^delta),Ldouble:hex(Ld),Rdouble:hex(Rd),actual:hex(Rd),expected:hex(relation)};
+    },{keys,fields});
+    expect(fields).toMatchObject(expected);expect(fields.delta).not.toBe('00000000');
+    const hit=expected.actual===expected.expected;if(rounds==='3')expect(hit).toBe(true);
+    await expect(page.locator('#lr-transcript .verdict')).toHaveClass(new RegExp(hit?'verdict-alarm':'verdict-info'));
+    const rows=page.locator('#lr-transcript tbody tr');await expect(rows).toHaveCount(4);
+    for(let i=0;i<4;i++){
+      const a=expected.actual.slice(i*2,i*2+2),b=expected.expected.slice(i*2,i*2+2);
+      expect(await rows.nth(i).locator('td').allTextContents()).toEqual([a,b,a===b?'equal':'different']);
+    }
+    await expect(page.locator('#lr-transcript')).toContainText('Queries actually made: 2 encryptions, 1 decryption.');
+  }
+});
+
+test('rounds negative fixture has only neutral D1-D3 results then actual swap distinguishes',async({page})=>{
+  await openRounds(page);await page.locator('#lr-trials').fill('20');await page.locator('#lr-fixture').click();await expect(page.locator('#lr-state')).toContainText('Complete:');
+  await expect(page.locator('#lr-matrix td')).toHaveCount(3);await expect(page.locator('#lr-matrix .verdict-info')).toHaveCount(3);await expect(page.locator('#panel-rounds .verdict-alarm')).toHaveCount(0);
+  await expect(page.locator('#lr-negative')).toContainText('NO ADVANTAGE ON D1–D3 — AND NOT A PRP');
+  await expect(page.locator('[data-claim="NEG-2"]')).toBeVisible();await expect(page.locator('[data-claim="NEG-2"]')).toHaveText('Zero measured advantage against D1–D3 does not make a Feistel network a pseudorandom permutation.');
+  await page.locator('#lr-swap').click();await expect(page.locator('#lr-state')).toContainText('Complete:');
+  const swap=page.locator('#lr-matrix td[data-d="D-swap"]');await expect(swap.locator('[data-world="feistel"]')).toHaveText('Feistel: 20/20 = 1.000000');await expect(swap.locator('[data-world="random"]')).toHaveText('Random permutation: 0/20 = 0.000000');await expect(swap.locator('.verdict')).toHaveClass(/verdict-alarm/);
+  await page.locator('#lr-same').uncheck();await expect(page.locator('#lr-matrix')).toBeEmpty();await runRounds(page);await expect(swap.locator('[data-world="feistel"]')).toHaveText('Feistel: 0/20 = 0.000000');
+});
+
+test('rounds retirement no-op failure bounds cancellation and missing entropy stay honest',async({page})=>{
+  await openRounds(page);await page.locator('#lr-trials').fill('10');await runRounds(page);
+  const before=await page.locator('#lr-matrix').innerHTML();await page.getByRole('button',{name:'Random functions',exact:true}).click();expect(await page.locator('#lr-matrix').innerHTML()).toBe(before);
+  await page.locator('#lr-rounds').selectOption('4');await expect(page.locator('#lr-matrix')).toBeEmpty();await expect(page.locator('#lr-state')).toContainText('stale');
+  for(const value of ['9','5001','2.5','']){await page.locator('#lr-trials').fill(value);await page.locator('#lr-run').click();await expect(page.locator('#lr-state')).toContainText('whole number from 10 to 5,000');await expect(page.locator('#lr-matrix')).toBeEmpty();}
+  await page.locator('#lr-trials').fill('5000');await page.locator('#lr-run').click();await expect(page.locator('#lr-state')).toContainText('Measuring');await page.locator('#lr-cancel').click();await expect(page.locator('#lr-state')).toContainText('Cancelled');await expect(page.locator('#lr-matrix')).toBeEmpty();
+  await page.locator('#lr-run').click();await page.locator('#tab-round').click();await openRounds(page);await expect(page.locator('#lr-state')).toContainText('Cancelled on leaving');await expect(page.locator('#lr-matrix')).toBeEmpty();
+  await page.locator('#lr-trials').fill('10');await page.evaluate(()=>{crypto.getRandomValues=()=>{throw new Error('Entropy unavailable');};});await page.locator('#lr-step').click();await expect(page.locator('#lr-state')).toContainText('Entropy unavailable');await expect(page.locator('#lr-transcript')).toBeEmpty();
+});
+
+// Mutation-only identity guard: a stale/mismatched artifact cannot count as a kill.
+test.afterEach(async({page})=>{
+  if(!process.env.MUTATION_ASSETS)return;
+  const expected=JSON.parse(process.env.MUTATION_ASSETS) as Record<string,string>;
+  for(const src of await page.locator('script[src]').evaluateAll(xs=>xs.map(x=>(x as HTMLScriptElement).src))){
+    const file=src.split('/').at(-1)!;if(!expected[file])throw new Error('MUTATION_ASSET_MISMATCH: unknown '+file);
+    const response=await page.request.get(src),hash=createHash('sha256').update(await response.body()).digest('hex');
+    if(hash!==expected[file])throw new Error('MUTATION_ASSET_MISMATCH: '+file);
+  }
 });

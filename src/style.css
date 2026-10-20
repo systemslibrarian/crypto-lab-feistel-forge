@@ -915,3 +915,19 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Round-count extension: bounded table scrolling, neutral absence of evidence. */
+#panel-rounds .lr-mode { display:flex; flex-wrap:wrap; gap:.5rem; }
+#panel-rounds .lr-scroll { max-width:100%; overflow:auto; margin:1rem 0; }
+#panel-rounds table { border-collapse:collapse; width:100%; }
+#panel-rounds th, #panel-rounds td { border:1px solid var(--border); padding:.65rem; vertical-align:top; text-align:left; }
+#panel-rounds th, #panel-rounds td { white-space:normal; }
+#panel-rounds #lr-matrix table { table-layout:fixed; min-width:54rem; }
+#panel-rounds #lr-matrix th:first-child { width:6rem; }
+#panel-rounds #lr-matrix td { min-width:15rem; }
+#panel-rounds #lr-matrix th { min-width:5rem; }
+#panel-rounds td p { margin:.35rem 0; }
+#panel-rounds .lr-sources a { color:var(--accent); text-decoration:underline; }
+#panel-rounds #lr-transcript .hexline { overflow-wrap:anywhere; }
+#panel-rounds .checkbox-line { margin:.7rem 0; }
+@media(max-width:640px) { #panel-rounds .controls { align-items:stretch; } #panel-rounds .controls > button { flex:1 1 100%; } }

@@ -37,6 +37,10 @@ onto every 32-bit value it produces, and the cipher still decrypts perfectly.
 This property is invisible in the SPN designs that replaced DES, where every
 layer must itself be a bijection.
 
+The How Many Rounds? tab measures classical distinguishers of one- through
+four-round Feistel networks and the distinction between ordinary and strong
+pseudorandom permutations, including the failure of reusing one round function.
+
 **Security model.** Everything runs in the browser; there is no backend and no
 network call. Keys and IVs are generated per session with `crypto.getRandomValues`
 and are never persisted. The only thing stored is `theme`, pinned to `dark`.
@@ -118,6 +122,12 @@ unfortunately, still only 64 bits."
    library should raise.
 6. **CAVP Vectors** — all 299 archived NIST vectors run in your browser in both
    directions, with the provenance table above printed in the page.
+
+7. **How Many Rounds?** — a measured matrix of forward and inverse-query
+   distinguishers against fresh Feistel and random-permutation oracles. Use
+   independent random functions or the existing DES primitive, inspect every
+   byte of a D3 transcript, and expose the shared-function construction with
+   the swap test. Zero measured advantage is explicitly not a PRP certificate.
 
 ### Failure codes
 
@@ -281,8 +291,8 @@ suites touches the network.
 
 ## Build & Verify
 
-**167 unit tests** across 8 files (`npm test`), plus **2 browser gate tests**
-and **34 claims tests**.
+**174 unit tests** across 9 files (`npm test`), plus **4 browser gate tests**
+and **38 claims tests**.
 
 The known-answer gate is the load-bearing part. `src/des/vectors.ts` carries
 **299 CAVP vectors**, each asserted encrypting AND decrypting — **598
@@ -301,6 +311,7 @@ the mode rather than only the block cipher:
 | `src/des/feistel.test.ts` | the headline claim: every round function inverts, at every round count, including ones measured to be non-injective; the exhaustive S-box preimage census; and that DES really is `FP(feistel(IP(block)))` |
 | `src/attacks/complement.test.ts` | the identity on 365 key/plaintext pairs, and the halving read off the searches' own counters |
 | `src/attacks/mitm.test.ts` | key recovery, the second-pair sieve, the operation count, and the published complexities |
+| `src/attacks/lubyRackoff.test.ts` | both inverse directions for 1–4 rounds, independent worked examples, 200-trial matrix cells, 10,000 forward/inverse lazy permutation queries, original DES provenance and weak-key redraws |
 | `src/attacks/sweet32.test.ts` | the birthday arithmetic, a measured truncated collision independently re-derived, and the arranged collision's recovery recomputed from public values only |
 
 `e2e/claims.spec.ts` checks the page tells the truth. It carries a **second,
@@ -318,6 +329,27 @@ production build at 1280px and 380px, across every driven state, with
 arithmetic contrast, non-text contrast, reflow, scroller-reachability and
 `aria-hidden` oracles beyond what axe reports. **Zero violations, and the
 deploy is blocked if that changes.**
+
+The round-count claims independently reconstruct both forward queries and the
+inverse query with the second DES, check raw counts and differences, and drive
+NEG-2 with three neutral four-round cells followed by a measured swap attack.
+`npm run test:mutations:rounds` applies seven concrete faults, requires a changed
+production artifact and a named zero-retry assertion failure, then restores
+the exact artifact and a passing owning test. Set `PLAYWRIGHT_CONFIG` only to
+use an alternate local browser configuration; CI keeps the original config.
+
+The extension also scans all of its states at 320px, in addition to the full
+1280/380/280px gate. No DES core or CAVP vector is changed.
+
+Sources for the new construction: Luby and Rackoff, “How to Construct
+Pseudorandom Permutations from Pseudorandom Functions”, SIAM Journal on
+Computing 17(2), 373–386 (1988), [doi:10.1137/0217022](https://epubs.siam.org/doi/10.1137/0217022);
+Katz–Lindell, *Introduction to Modern Cryptography*, third edition, §8.6 and
+Exercises 8.16–8.18. The displayed rules are explicitly verified derivations.
+Related labs: [Simon Period](https://systemslibrarian.github.io/crypto-lab-simon-period/)
+for quantum queries, [Format Ward](https://systemslibrarian.github.io/crypto-lab-format-ward/)
+for small domains and [Hidden Bit](https://systemslibrarian.github.io/crypto-lab-hidden-bit/)
+for the lazy-oracle sampling pattern ported here.
 
 ## Performance
 
