@@ -98,3 +98,27 @@ Concept deepened: **4. Confusion, diffusion, and cipher structure**.
 Final main SHA and served-byte proof are recorded after publication. The shared
 fleet deploy-sync checker is blocked by missing unrelated sibling clones;
 shared catalog, counsel, census and checker content remain unchanged.
+
+## Educational accuracy follow-up
+
+Small nonzero measured differences are no longer labelled “no advantage.”
+Cells state whether their measured difference is within ±0.05 or exceeds
+0.05; the page identifies this as a display threshold, not a significance
+test or security proof. The zero-advantage negative-fixture headline now
+requires exactly equal measured rates. The single-trial transcript says
+that the D3 relation held, without calling one observation a distinguisher
+success. Raw counts, arithmetic, oracle construction and alarm styles remain
+unchanged.
+
+Validation: all 174 unit tests passed. All seven mutation checks were rerun
+against the corrected build, with nonempty patches, changed hashes, named
+assertion failures, served-asset checks and byte-exact restoration. The
+updated mutation-evidence.json records that run.
+
+An initial mutation run stopped on a restoration hash mismatch: the output
+directory contained both original and mutant JavaScript bundles. Two isolated
+rebuilds then matched exactly. The successful rerun used an ignored local
+Playwright configuration that serves the runner's already-built artifact,
+avoiding a second build inside Playwright. The hash and served-asset guards
+were retained. The committed CI build and 42-test browser/accessibility gate
+are unchanged.

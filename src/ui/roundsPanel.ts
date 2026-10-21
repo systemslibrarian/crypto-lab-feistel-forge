@@ -63,7 +63,7 @@ export function renderRoundsPanel(root:HTMLElement):void {
       el('p',{'data-world':'random'},`Random permutation: ${cell.random.hits}/${cell.random.trials} = ${pr.toFixed(6)}`),
       el('p',{'data-advantage':'true'},`Advantage: ${adv.toFixed(6)}`),
       el('p',{class:'field-help'},`Each world: ${cell.feistel.encryptions} encryptions, ${cell.feistel.decryptions} inverse queries.`),
-      verdict(tone,distinguished?'✕ distinguished':'– no advantage measured'));
+      verdict(tone,distinguished?'✕ measured difference exceeds 0.05':'– measured difference within ±0.05'));
   }
   function showTrace(t:Transcript,cell:Cell):void {
     clear(trace);trace.dataset.rounds=rounds.select.value;trace.dataset.mode=mode;
@@ -74,7 +74,7 @@ export function renderRoundsPanel(root:HTMLElement):void {
     append(trace,dl);
     const rows=el('tbody');for(let i=0;i<4;i++)append(rows,el('tr',{},el('th',{scope:'row'},`Byte ${i+1}`),el('td',{},t.fields.actual[i].toString(16).padStart(2,'0')),el('td',{},t.fields.expected[i].toString(16).padStart(2,'0')),el('td',{},t.fields.actual[i]===t.fields.expected[i]?'equal':'different')));
     append(trace,scroller('D3 byte comparison','lr-scroll',el('table',{},el('caption',{},'R″ compared with S ⊕ S′ ⊕ R'),el('thead',{},el('tr',{},el('th',{scope:'col'},'Byte'),el('th',{scope:'col'},'Actual'),el('th',{scope:'col'},'Expected'),el('th',{scope:'col'},'Relation'))),rows)),
-      verdict(t.hit?'alarm':'info',t.hit?'✕ D3 distinguished this trial':'– D3 relation did not hold; no security conclusion.'),
+      verdict(t.hit?'alarm':'info',t.hit?'✕ D3 relation held in this trial':'– D3 relation did not hold; no security conclusion.'),
       el('p',{},`Queries actually made: ${t.encryptions} encryptions, ${t.decryptions} decryption.`));
   }
   async function measure():Promise<void> {
@@ -96,10 +96,10 @@ export function renderRoundsPanel(root:HTMLElement):void {
       const body=el('tbody');for(const r of rs){const row=el('tr',{},el('th',{scope:'row'},`${r} ${r===1?'round':'rounds'}`));for(const d of ds)append(row,renderCell(cells.get(`${r}:${d}`)!,r,d));append(body,row);}
       append(matrix,scroller('Measured round-count matrix','lr-scroll',el('table',{},el('caption',{},`${focus.checked?'Focused view: selected round only.':'All four round counts.'} ${same.checked?'Same function every round.':'Independent functions.'} ${n} fresh trials per world in every cell.`),el('thead',{},el('tr',{},el('th',{scope:'col'},'Rounds'),...ds.map(d=>el('th',{scope:'col'},d)))),body)));
       const fourth=['D1','D2','D3'].map(d=>cells.get(`4:${d}`));
-      if(same.checked&&fourth.every(c=>c&&Math.abs(c.feistel.hits/c.feistel.trials-c.random.hits/c.random.trials)<=.05)){
+      if(same.checked&&fourth.every(c=>c&&c.feistel.hits/c.feistel.trials===c.random.hits/c.random.trials)){
         append(negative,verdict('info','NO ADVANTAGE ON D1–D3 — AND NOT A PRP'),el('p',{'data-claim':'NEG-2'},ROUNDS_NEGATIVE_CLAIM),el('p',{},'This warning concerns the four-round row. The shared-function network obeys the swap identity; try its test to expose the missing distinction.'));
       }else append(negative,el('p',{},ROUNDS_NEGATIVE_CLAIM));
-      clear(state);append(state,verdict('info',`Complete: ${rs.length*ds.length} measured cells in ${(performance.now()-started).toFixed(1)} ms. A difference at most 0.05 is labelled “no advantage measured”; that display threshold is not a proof.`));
+      clear(state);append(state,verdict('info',`Complete: ${rs.length*ds.length} measured cells in ${(performance.now()-started).toFixed(1)} ms. Differences within ±0.05 use neutral styling. This display threshold is not a statistical significance test or a security proof; a small nonzero difference is still reported numerically.`));
     }catch(error){if(ticket===epoch)fail(error);}finally{if(ticket===epoch)controls(false);}
   }
   run.addEventListener('click',()=>{void measure();});

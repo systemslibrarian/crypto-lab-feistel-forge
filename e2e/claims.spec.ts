@@ -778,7 +778,7 @@ test('rounds matrix raw counts probabilities advantages and alarm semantics agre
     const certain=(r===1&&(d==='D1'||d==='D3'))||(r===2&&(d==='D2'||d==='D3'))||(r===3&&d==='D3');
     if(certain)expect(f.hits).toBe(20);else expect(f.hits).toBeLessThanOrEqual(1);expect(pi.hits).toBeLessThanOrEqual(1);
     await expect(cell.locator('.verdict')).toHaveClass(new RegExp(Math.abs(advantage)>.05?'verdict-alarm':'verdict-info'));
-    await expect(cell.locator('.verdict')).toContainText(Math.abs(advantage)>.05?'✕ distinguished':'– no advantage measured');
+    await expect(cell.locator('.verdict')).toContainText(Math.abs(advantage)>.05?'✕ measured difference exceeds 0.05':'– measured difference within ±0.05');
     const e=d==='D1'?20:40,dec=d==='D3'?20:0;await expect(cell).toContainText(`Each world: ${e} encryptions, ${dec} inverse queries.`);
   }
   await expect(page.locator('#lr-convention')).toContainText('no final swap');
@@ -816,6 +816,7 @@ test('rounds negative fixture has only neutral D1-D3 results then actual swap di
   await openRounds(page);await page.locator('#lr-trials').fill('20');await page.locator('#lr-fixture').click();await expect(page.locator('#lr-state')).toContainText('Complete:');
   await expect(page.locator('#lr-matrix td')).toHaveCount(3);await expect(page.locator('#lr-matrix .verdict-info')).toHaveCount(3);await expect(page.locator('#panel-rounds .verdict-alarm')).toHaveCount(0);
   await expect(page.locator('#lr-negative')).toContainText('NO ADVANTAGE ON D1–D3 — AND NOT A PRP');
+  for(const cell of await page.locator('#lr-matrix td').all())await expect(cell).toHaveAttribute('data-adv','0');
   await expect(page.locator('[data-claim="NEG-2"]')).toBeVisible();await expect(page.locator('[data-claim="NEG-2"]')).toHaveText('Zero measured advantage against D1–D3 does not make a Feistel network a pseudorandom permutation.');
   await page.locator('#lr-swap').click();await expect(page.locator('#lr-state')).toContainText('Complete:');
   const swap=page.locator('#lr-matrix td[data-d="D-swap"]');await expect(swap.locator('[data-world="feistel"]')).toHaveText('Feistel: 20/20 = 1.000000');await expect(swap.locator('[data-world="random"]')).toHaveText('Random permutation: 0/20 = 0.000000');await expect(swap.locator('.verdict')).toHaveClass(/verdict-alarm/);
