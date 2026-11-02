@@ -41,7 +41,11 @@ export function svg(tag: string, attrs: Attrs = {}, ...children: (Node | string 
   }
   for (const child of children) {
     if (!child) continue;
-    node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+    if (typeof child === 'string') {
+      node.appendChild(document.createTextNode(child));
+      continue;
+    }
+    node.appendChild(child);
   }
   return node;
 }
@@ -49,7 +53,16 @@ export function svg(tag: string, attrs: Attrs = {}, ...children: (Node | string 
 export function append(parent: Node, ...children: Child[]): void {
   for (const child of children) {
     if (child === null || child === undefined || child === false) continue;
-    parent.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+    // A string child is TEXT and nothing else. Split from the node case rather
+    // than selected inside appendChild's argument, so the string's only route
+    // into the document is createTextNode -- readable as such by a person and
+    // by a taint analysis, which cannot see which branch of a ternary a value
+    // took. This is the sink CodeQL names for js/xss-through-exception.
+    if (typeof child === 'string') {
+      parent.appendChild(document.createTextNode(child));
+      continue;
+    }
+    parent.appendChild(child);
   }
 }
 
