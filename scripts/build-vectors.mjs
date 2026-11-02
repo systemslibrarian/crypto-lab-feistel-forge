@@ -32,6 +32,33 @@ const URL =
 const EXPECTED_SHA256 = '19d8841f84ae3415350b069a4768bd416c05a0533ee43e905ab099adb8ccb374';
 const OUT = new global.URL('../src/des/vectors.ts', import.meta.url).pathname;
 
+/**
+ * Emit a value as a TypeScript single-quoted string literal.
+ *
+ * The escape ORDER is the whole point: backslash first, or the backslashes this
+ * function itself introduces get escaped a second time. The earlier version
+ * escaped only `'`, so a note containing a backslash -- or ending in one, which
+ * would have escaped the closing quote -- wrote a file that does not parse.
+ * Newlines are escaped for the same reason: `note` is prose written by hand in
+ * the FAMILIES table below, so it is exactly the field a future editor is most
+ * likely to break this with.
+ */
+function tsString(value) {
+  return `'${String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')}'`;
+}
+
+/** The hex fields come from NIST's archive; refuse anything that is not hex. */
+function hex(value, what) {
+  if (!/^[0-9a-fA-F]+$/.test(String(value))) {
+    throw new Error(`${what}: expected hex, got ${JSON.stringify(value)}`);
+  }
+  return tsString(value);
+}
+
 /** The six families this lab ships, in the order they appear in the module. */
 const FAMILIES = [
   {
@@ -164,17 +191,17 @@ try {
     .map(
       (g) =>
         `  {\n` +
-        `    id: '${g.id}',\n` +
-        `    mode: '${g.mode}',\n` +
-        `    title: '${g.title}',\n` +
-        `    note:\n      '${g.note.replace(/'/g, "\\'")}',\n` +
-        `    file: 'KAT_TDES/${g.file}',\n` +
+        `    id: ${tsString(g.id)},\n` +
+        `    mode: ${tsString(g.mode)},\n` +
+        `    title: ${tsString(g.title)},\n` +
+        `    note:\n      ${tsString(g.note)},\n` +
+        `    file: ${tsString(`KAT_TDES/${g.file}`)},\n` +
         `    vectors: [\n` +
         g.vectors
           .map((v) =>
             v.IV
-              ? `      { key: '${v.KEYs}', iv: '${v.IV}', plaintext: '${v.PLAINTEXT}', ciphertext: '${v.CIPHERTEXT}' },`
-              : `      { key: '${v.KEYs}', plaintext: '${v.PLAINTEXT}', ciphertext: '${v.CIPHERTEXT}' },`
+              ? `      { key: ${hex(v.KEYs, 'key')}, iv: ${hex(v.IV, 'iv')}, plaintext: ${hex(v.PLAINTEXT, 'plaintext')}, ciphertext: ${hex(v.CIPHERTEXT, 'ciphertext')} },`
+              : `      { key: ${hex(v.KEYs, 'key')}, plaintext: ${hex(v.PLAINTEXT, 'plaintext')}, ciphertext: ${hex(v.CIPHERTEXT, 'ciphertext')} },`
           )
           .join('\n') +
         `\n    ],\n  },`
