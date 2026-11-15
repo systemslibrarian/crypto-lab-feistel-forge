@@ -242,9 +242,19 @@ world's ATMs, payment terminals and inter-bank messaging for two decades. Its
 descendants are everywhere the design pattern is: **Blowfish**, **Twofish**,
 **Camellia**, **CAST-128**, **GOST**, **RC5**, **MISTY1**, **KASUMI** (3G) and
 **Simon/Speck** are all Feistel or generalised-Feistel constructions, and NIST's
-format-preserving encryption modes FF1 and FF3-1 (SP 800-38G) are Feistel
+format-preserving encryption modes FF1 and FF3 (SP 800-38G) are Feistel
 networks over arbitrary alphabets — the round structure is the whole point
 there.
+
+**Standards reviewed 15 November 2026:**
+[SP 800-38G](https://csrc.nist.gov/pubs/sp/800/38/g/final) (March 2016, still
+the last finished text) specifies FF1 and FF3. FF3-1, the 56-bit-tweak revision
+of FF3, has only ever existed inside a draft — the February 2019 initial public
+draft of Rev. 1 — and the
+[2nd public draft of SP 800-38G Rev. 1](https://csrc.nist.gov/pubs/sp/800/38/g/r1/2pd)
+(3 February 2025) removes FF3 and FF3-1 entirely, leaving FF1 as the only
+format-preserving method NIST specifies: "The encryption method FF3 is no
+longer specified."
 
 The block-size failure is the part still in living memory. Sweet32
 (CVE-2016-2183) was demonstrated against real HTTPS sessions using 3DES and
