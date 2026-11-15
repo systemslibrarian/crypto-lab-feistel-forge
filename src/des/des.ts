@@ -124,10 +124,11 @@ export function keySchedule(key: Uint8Array): KeySchedule {
  *
  * Expand R to 48 bits, mix in the subkey, run the eight S-boxes, permute the
  * 32 bits that come out. It is emphatically NOT a bijection: each S-box maps 6
- * bits to 4, so f discards half the information in its own input. The Feistel
- * structure never inverts it, which is why that does not matter — see
- * `feistel.ts`, where you can replace f with something even more destructive
- * and the network still round-trips.
+ * bits to 4, so the eight boxes take the 48 expanded bits down to 32 and f
+ * collapses 2^16 expanded inputs onto every output. The Feistel structure
+ * never inverts it, which is why that does not matter — see `feistel.ts`, where
+ * you can replace f with something even more destructive and the network still
+ * round-trips.
  */
 export function roundFunction(right: Uint8Array, subkey: Uint8Array): Uint8Array {
   const expanded = permute(right, E);

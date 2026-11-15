@@ -37,6 +37,20 @@ onto every 32-bit value it produces, and the cipher still decrypts perfectly.
 This property is invisible in the SPN designs that replaced DES, where every
 layer must itself be a bijection.
 
+**Page text reviewed 15 November 2026:** three statements on the exhibit pages
+were corrected. The complementation panel had the trade backwards, reading
+"2^55 expected trials instead of 2^54"; the property brings the expected count
+*down* to 2^54 from 2^55 — the direction that panel's own race measures — per
+[Handbook of Applied Cryptography §7.4.3](https://cacr.uwaterloo.ca/hac/about/chap7.pdf),
+under Fact 7.87. The round-function prose said f "throws away 16 of every 32
+bits": E expands R from 32 bits to 48 and the eight S-boxes take those 48 down
+to 32
+([FIPS 46-3](https://csrc.nist.gov/files/pubs/fips/46-3/final/docs/fips46-3.pdf)),
+so what f discards is 16 of 48. And the `(R AND 0x0F0F0F0F) XOR K` round
+function was labelled "exactly 16-to-1"; it discards 16 of the half block's 32
+bits, so it is 2^16-to-1 — now settled by exhaustion in
+`src/des/feistel.test.ts`.
+
 The How Many Rounds? tab measures classical distinguishers of one- through
 four-round Feistel networks and the distinction between ordinary and strong
 pseudorandom permutations, including the failure of reusing one round function.

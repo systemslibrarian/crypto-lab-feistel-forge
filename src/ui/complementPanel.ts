@@ -67,7 +67,7 @@ export function renderComplementPanel(root: HTMLElement): void {
       el(
         'p',
         {},
-        el('strong', { text: 'The cost is exactly one bit: 2^55 expected trials instead of 2^54.' }),
+        el('strong', { text: 'The cost is exactly one bit: 2^54 expected trials instead of 2^55.' }),
         ' It never grew into anything larger, and it needs chosen plaintext. Small — but DES had ' +
           'no bits to spare.'
       )
@@ -306,7 +306,7 @@ export function renderComplementPanel(root: HTMLElement): void {
       el(
         'p',
         { class: 'field-help' },
-        `At the full width this is 2^55 expected trials instead of 2^54 — one bit off a 56-bit key. ` +
+        `At the full width this is 2^54 expected trials instead of 2^55 — one bit off a 56-bit key. ` +
           `The swept keys here all share the base ${SEARCH_BASE} outside the ${bits} varied bits, ` +
           'which is what makes the search finish while you watch.'
       )

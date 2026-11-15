@@ -88,7 +88,7 @@ export const ROUND_FUNCTIONS: readonly FeistelRoundFunction[] = [
   {
     id: 'nibble',
     name: 'F(R, K) = (R AND 0x0F0F0F0F) XOR K',
-    note: 'Keeps four bits of every byte and discards the other four. Exactly 16-to-1.',
+    note: 'Keeps four bits of every byte and discards the other four. Exactly 2^16-to-1 over the half block.',
     isDes: false,
     apply: nibble32,
   },

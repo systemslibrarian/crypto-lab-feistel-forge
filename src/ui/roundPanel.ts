@@ -93,8 +93,8 @@ export function renderRoundPanel(root: HTMLElement): void {
         el('code', { text: 'F' }),
         ' again — forwards, on a value you already have — and XOR the same thing back off. ',
         el('strong', { text: 'F is never inverted, so F never has to be invertible.' }),
-        ' That is the whole trick, and it is why DES could use a round function that throws away ' +
-          'half the information it is given.'
+        ' That is the whole trick, and it is why DES could use a round function that throws ' +
+          'information away — its eight S-boxes take 48 bits down to 32.'
       ),
       el(
         'p',
@@ -246,7 +246,7 @@ export function renderRoundPanel(root: HTMLElement): void {
         {
           text: 'Decryption still works; the cipher is just worthless.',
           correct: true,
-          why: 'Exactly. Invertibility is a property of the Feistel STRUCTURE; security is a property of F. Separating those two is what the construction buys you, and it is why DES could afford a round function that throws away 16 of every 32 bits.',
+          why: 'Exactly. Invertibility is a property of the Feistel STRUCTURE; security is a property of F. Separating those two is what the construction buys you, and it is why DES could afford a round function whose eight S-boxes take 48 bits down to 32.',
         },
         {
           text: 'It depends on the key schedule.',

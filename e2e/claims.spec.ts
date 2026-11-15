@@ -269,6 +269,27 @@ test.describe('One Round', () => {
     expect(body).toContain('65,536');
   });
 
+  test('the prose gives f the widths FIPS 46-3 gives it: 48 bits in to the boxes, 32 out', async ({
+    page,
+  }) => {
+    const panel = await page.locator('#panel-round').innerText();
+    expect(panel).toContain('its eight S-boxes take 48 bits down to 32');
+
+    // The learner check explains itself in the same terms. E expands R from 32
+    // bits to 48 and the eight boxes take those 48 down to 32, so f discards 16
+    // of 48 — not 16 of 32, and not "half" of what it is given.
+    await page.locator('#panel-round summary', { hasText: 'Check yourself' }).click();
+    await page.locator('#panel-round .check-opt', { hasText: 'the cipher is just worthless' }).click();
+    const why = await page.locator('#panel-round .check-result').innerText();
+    expect(why).toContain('Correct');
+    expect(why).toContain('a round function whose eight S-boxes take 48 bits down to 32');
+
+    for (const text of [panel, why]) {
+      expect(text).not.toMatch(/16 of every 32 bits/);
+      expect(text).not.toMatch(/half the information it is given/);
+    }
+  });
+
   test('RETIREMENT: changing F retires a fresh undo result, and re-selecting it does not', async ({ page }) => {
     await page.getByRole('button', { name: /Undo this round/ }).click();
     await expect(page.locator('#panel-round .verdict-pass')).toContainText('Byte for byte identical');
@@ -455,6 +476,31 @@ test.describe('Complementation', () => {
     // Cross-check: the page's printed ratios must equal the recomputed ones.
     expect(await valueFor(page, '#panel-complement', 'Keys per encryption, plain')).toBe('1.00');
     expect(await valueFor(page, '#panel-complement', 'Keys per encryption, clever')).toBe('2.00');
+  });
+
+  test('the trial-count prose points the same way the race does: cheaper, by one bit', async ({
+    page,
+  }) => {
+    await page.selectOption('#comp-half', 'direct');
+    await page.getByRole('button', { name: 'Race the two searches' }).click();
+
+    const plainEnc = Number((await valueFor(page, '#panel-complement', 'Plain: encryptions')).replace(/,/g, ''));
+    const cleverKeys = Number(
+      (await valueFor(page, '#panel-complement', 'Complementation: keys covered')).replace(/,/g, ''),
+    );
+    const measured = cleverKeys / plainEnc; // keys ruled out per encryption
+
+    // Both copies of the claim, cross-checked against that measurement: the
+    // property makes the search CHEAPER, by exactly the factor just measured.
+    const prose = (await page.locator('#panel-complement').innerText()).replace(/\s+/g, ' ');
+    const claims = [...prose.matchAll(/2\^(\d+) expected trials instead of 2\^(\d+)/g)];
+    expect(claims.length, 'both copies of the trial-count claim').toBe(2);
+    for (const [, withProperty, without] of claims) {
+      expect(2 ** Number(without) / 2 ** Number(withProperty)).toBeCloseTo(measured, 6);
+      // A plain 56-bit search expects 2^55 trials; the property takes it to 2^54.
+      expect(Number(without)).toBe(55);
+      expect(Number(withProperty)).toBe(54);
+    }
   });
 
   test('hidden in the complement half, the plain search sweeps everything and finds nothing', async ({ page }) => {

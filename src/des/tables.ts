@@ -117,9 +117,9 @@ export const SHIFTS: readonly number[] = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2,
  * These are the only non-linear component in DES and the only part of the
  * standard NIST never explained. They are also the reason the demo's own round
  * function is not invertible: each box is 4-to-1 (every 4-bit output has exactly
- * four 6-bit preimages in its row-pair structure), so f throws away 16 bits of
- * every 32 it produces. The Feistel structure does not care — that is the whole
- * point of the construction.
+ * four 6-bit preimages in its row-pair structure), so f throws away 16 of the
+ * 48 bits the boxes are given. The Feistel structure does not care — that is
+ * the whole point of the construction.
  */
 export const SBOX: readonly (readonly number[])[] = [
   [

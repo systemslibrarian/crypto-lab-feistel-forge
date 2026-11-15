@@ -89,13 +89,50 @@ describe('the round functions really are destructive', () => {
     expect(m.collapseRatio).toBeGreaterThan(1);
   });
 
-  it('F = (R AND 0x0F0F0F0F) XOR K is exactly 16-to-1 over a 16-bit sweep', () => {
+  it('F = (R AND 0x0F0F0F0F) XOR K is exactly 256-to-1 over a 16-bit sweep', () => {
     // The sweep varies the low 16 bits of R; the mask keeps 4 of every 8, so 8
     // of those 16 bits survive: 65536 inputs onto 256 outputs.
     const m = measureImage(roundFunctionById('nibble'), new Uint8Array(6), 16);
     expect(m.inputs).toBe(65536);
     expect(m.outputs).toBe(256);
     expect(m.collapseRatio).toBe(256);
+  });
+
+  it('F = (R AND 0x0F0F0F0F) XOR K is exactly 2^16-to-1 over the whole half block', () => {
+    // The 16-bit sweep above sees only a slice. The ratio over the full 32-bit
+    // half block is settled by exhaustion in two halves, with no sampling: the
+    // 16 bits the mask DISCARDS cannot change the output, and the 16 bits it
+    // KEEPS always do — so every output has exactly 2^16 preimages.
+    const f = roundFunctionById('nibble');
+    const subkey = new Uint8Array([0x3c, 0xa5, 0x5a, 0xc3, 0x00, 0x00]);
+    const pack = (b: Uint8Array): number => ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) >>> 0;
+    const nibbles = (v: number, shift: number): Uint8Array =>
+      new Uint8Array([
+        ((v >>> 12) & 0xf) << shift,
+        ((v >>> 8) & 0xf) << shift,
+        ((v >>> 4) & 0xf) << shift,
+        (v & 0xf) << shift,
+      ]);
+
+    // Sweep all 2^16 settings of the discarded high nibbles, kept bits fixed.
+    const kept = [0x0a, 0x05, 0x0c, 0x03];
+    const collapsed = new Set<number>();
+    for (let v = 0; v < 65536; v++) {
+      const right = nibbles(v, 4);
+      for (let i = 0; i < 4; i++) right[i] |= kept[i];
+      collapsed.add(pack(f.apply(right, subkey)));
+    }
+    expect(collapsed.size).toBe(1);
+
+    // Sweep all 2^16 settings of the kept low nibbles, discarded bits fixed.
+    const distinct = new Set<number>();
+    for (let v = 0; v < 65536; v++) {
+      const right = nibbles(v, 0);
+      for (let i = 0; i < 4; i++) right[i] |= 0xf0;
+      distinct.add(pack(f.apply(right, subkey)));
+    }
+    expect(distinct.size).toBe(2 ** 16);
+    expect(2 ** 32 / distinct.size).toBe(2 ** 16);
   });
 
   it("DES's own f collapses too, but only slightly on a narrow slice", () => {
