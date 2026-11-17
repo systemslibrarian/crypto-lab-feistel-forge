@@ -67,7 +67,7 @@ export const ROUND_FUNCTIONS: readonly FeistelRoundFunction[] = [
   {
     id: 'des',
     name: "DES's own f",
-    note: 'Expand to 48 bits, mix the subkey, eight S-boxes, permute. Already 2^16-to-1 by itself.',
+    note: 'Expand to 48 bits, mix the subkey, eight S-boxes, permute. The S-box layer is 2^16-to-1 on its own 48-bit input; f as a whole barely collapses the 32-bit half it is given.',
     isDes: true,
     apply: roundFunction,
   },
@@ -204,10 +204,13 @@ export interface ImageMeasurement {
  *
  * For DES's own f the count comes back a little BELOW the input count — real
  * collisions, a few hundred of them, far more than chance would give. That is
- * evidence f is not injective, but it is not a measurement of how much f
- * discards: a narrow sweep of R moves only some of the eight S-boxes, so most
- * of the collapse is out of view. `sboxCensus` is where that one is shown
- * properly, by exhaustion rather than by sampling.
+ * evidence f is not injective, and that is all it is. It is NOT a narrow view
+ * of some larger collapse: f barely collapses at all. E is injective and the
+ * subkey XOR is a bijection, so f only ever sees 2^32 of the 48-bit points the
+ * S-boxes are 2^16-to-1 over, and a wide sweep bears that out — over 2^22
+ * values of R, f returns about 1.07 inputs per distinct output, not 2^16
+ * (`feistel.test.ts`). The 2^16-to-1 figure belongs to the S-box layer on its
+ * own 48-bit domain, which `sboxCensus` shows by exhaustion.
  */
 export function measureImage(f: FeistelRoundFunction, subkey: Uint8Array, bits = 16): ImageMeasurement {
   const inputs = 2 ** bits;

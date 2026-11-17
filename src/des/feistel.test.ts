@@ -136,15 +136,45 @@ describe('the round functions really are destructive', () => {
   });
 
   it("DES's own f collapses too, but only slightly on a narrow slice", () => {
-    // The honest result, and the reason the S-box census exists. Sweeping 14
-    // bits of R moves only some of the eight S-boxes, so most of the 2^16-to-1
-    // collapse f really has is out of view: a few hundred inputs collide, not
-    // most of them. This measurement is therefore evidence that f is NOT
-    // injective — and NOT a measurement of how much f discards.
+    // The honest result: a few hundred inputs collide, not most of them. This
+    // measurement is evidence that f is NOT injective, and nothing more. It is
+    // not a narrow view of a 2^16-to-1 collapse — f has no such collapse, as
+    // the wide sweep below shows. 2^16-to-1 is the S-box layer's ratio on its
+    // own 48-bit domain, which the S-box census settles by exhaustion.
     const m = measureImage(roundFunctionById('des'), desSubkeys(key())[0], 14);
     expect(m.outputs).toBeLessThan(m.inputs);
     expect(m.outputs).toBeGreaterThan(0.9 * m.inputs);
     expect(m.collapseRatio).toBeGreaterThan(1);
+  });
+
+  it("DES's own f is nowhere near 2^16-to-1 on its 32-bit half", () => {
+    // The UI note for DES's f used to read "Already 2^16-to-1 by itself". It is
+    // not: 2^16-to-1 is what the eight S-boxes do to their own 48-bit input
+    // (2^48 -> 2^32). f is handed 32 bits, E is injective and the subkey XOR is
+    // a bijection, so f only ever visits 2^32 of those 2^48 points.
+    //
+    // measureImage() pins the top two bytes of R to zero, so it cannot see this;
+    // sweep all four bytes here instead.
+    const subkey = desSubkeys(key())[0];
+    const f = roundFunctionById('des');
+    const pack = (b: Uint8Array): number => ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) >>> 0;
+    const inputs = 2 ** 22;
+    const seen = new Set<number>();
+    const right = new Uint8Array(4);
+    for (let v = 0; v < inputs; v++) {
+      right[0] = (v >>> 24) & 0xff;
+      right[1] = (v >>> 16) & 0xff;
+      right[2] = (v >>> 8) & 0xff;
+      right[3] = v & 0xff;
+      seen.add(pack(f.apply(right, subkey)));
+    }
+    const ratio = inputs / seen.size;
+    // Real collisions — f is not injective …
+    expect(seen.size).toBeLessThan(inputs);
+    // … but about one input per output, not 65 536 of them.
+    expect(ratio).toBeLessThan(1.5);
+    expect(ratio).toBeGreaterThan(1);
+    expect(ratio).toBeLessThan(2 ** 16 / 1000);
   });
 });
 
