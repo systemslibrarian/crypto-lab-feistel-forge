@@ -24,6 +24,12 @@ describe('the birthday arithmetic', () => {
     expect(collisionProbability(2 ** 32, 64)).toBeCloseTo(0.3935, 3);
   });
 
+  it('preserves a tiny nonzero probability for the 128-bit comparison', () => {
+    const probability = collisionProbability(2 ** 32, 128);
+    expect(probability).toBeGreaterThan(0);
+    expect(probability / 2 ** -65).toBeCloseTo(1, 9);
+  });
+
   it('is monotone and bounded', () => {
     expect(collisionProbability(0)).toBe(0);
     expect(collisionProbability(1)).toBe(0);

@@ -62,7 +62,10 @@ export function collisionProbability(blocks: number, blockBits = 64): number {
   if (blocks < 2) return 0;
   const n = blocks;
   const exponent = -(n * (n - 1)) / (2 * 2 ** blockBits);
-  return 1 - Math.exp(exponent);
+  // `1 - exp(x)` rounds to zero when x is tiny.  That happens in the live
+  // 128-bit comparison (2^32 blocks gives a real probability near 2^-65), so
+  // use expm1 to preserve the small difference instead of teaching "zero".
+  return -Math.expm1(exponent);
 }
 
 /** How many blocks are needed before a collision is `p`-likely. */
