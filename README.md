@@ -209,10 +209,10 @@ The threats this lab is about, and the ones it deliberately does not model.
   running the cipher rather than by describing them.
 - **Parity that nobody checks.** Accepting a key with bad parity silently
   discards a transmission check the format exists to provide.
-- **The 64-bit block-size birthday bound (Sweet32).** After about 2^32 blocks —
-  32 GiB — under one key, two CBC ciphertext blocks repeat, and
-  `P_i XOR P_j = C_{i-1} XOR C_{j-1}` hands the eavesdropper a plaintext block
-  they did not already know. **This is the failure a longer key does not
+- **The 64-bit block-size birthday bound (Sweet32).** At 2^32 eight-byte blocks (32 GiB) under one key, the birthday model gives about
+  a 39% chance of at least one repeat. Equal CBC ciphertext blocks imply
+  `P_i XOR P_j = C_{i-1} XOR C_{j-1}`. This determines the XOR of the two
+  plaintext blocks. Knowing either block determines the other. **This is the failure a longer key does not
   touch**, and it is why the lab exists.
 
 **What the lab does NOT claim.** Not that 3DES was fine except for its block
